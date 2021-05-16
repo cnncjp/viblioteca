@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">Webinar検索</div>
+    <div class="row">
+        <input class="form-control" placeholder="検索キーワード(例: 情報)" onchange="inputChange(this);">
+    </div>
+    <br/>
+    <div id="resultTitle" class="row"></div>
+    <div id="result" class="row" style="overflow: auto; min-height: 200px; max-height: 370px; display: flex; border: 1px solid silver; border-radius: 4px;">
+        <br/>
+        <font color="gray">検索結果がここに表示されます。</font>
+<!--        
+        <div class="btn btn-light" data-bs-toggle="button" aria-pressed="false" style="width:180px; height:180px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
+            <b><small>[<span>CNNC</span>]</small></b><br/>
+            <span>サンプル</span>
+        </div>
+-->
+    </div>
+    <br/>
+    <div id="page" class="row" style="min-height: 400px; max-height: 600px; display: flex; border: 1px solid silver; border-radius: 4px;">
+        <br/>
+        <font color="gray">クリックしたページがここに表示されます。</font>
+
+<!--
+        <iframe width="640" height="360" src="https://webinar.ieice.org/summary.php?id=177&expandable=1&code=PRS&sel=&year=2020"></iframe>
+        <iframe allow="autoplay; fullscreen" allowfullscreen="" frameborder="0" height="360" src="https://player.vimeo.com/video/487952537" width="640"></iframe>
+-->
+    </div>
+    <template id="sr">
+        <div class="btn btn-light" data-toggle="button" style="width:180px; height:180px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
+            <b><small>[<span></span>]</small></b><br/>
+            <span></span>
+            <!-- img src="" width="180px" height="180px" -->
+        </div>
+    </template>
+    <template id="resultPage">
+        <iframe width="640" height="360" src=""></iframe>
+    </template>
+    <hr>
+    Copyright <a href="https://cnnc.jp/">Connections Co., Ltd.</a>
+</div>
+<script>
+let timer = null;
+const urls = new Map();
+function inputChange(self){
+    const query = $(self).val().trim();
+    if(timer == null){
+        console.log("timer start");
+        setTimeout(()=>{
+            console.log("do search");
+            $.getJSON('search', {query: query}, result=>{
+                const template = document.querySelector('#sr');
+                const resDiv = $("#result");
+                resDiv.empty();
+                $("#page").empty();
+                urls.clear();
+                $("#resultTitle").empty().append($("<span>").text(`検索結果: ${result.length}件`));
+                for(const r of result){
+                    const div = $(template.content.cloneNode(true));
+                    div.find("span:eq(0)").text(r["org"]);
+                    div.find("span:eq(1)").text(r["title"]);
+//                    div.find("img").attr("src", r[8]);
+                    resDiv.append(div);
+                    const id = r["id"];
+                    urls.set(id, r["url"]);
+                    resDiv.find("div:last").on("click", ()=>{
+                        const url = urls.get(id);
+                        console.log(`${id}: ${url}`);
+                        const pageContainer = $("#page");
+                        const pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
+                        pageContainer.empty();
+                        pageNode.find("iframe").attr("src", url);
+                        pageContainer.append(pageNode);
+                    });
+                }
+                console.log(result);
+                timer = null;
+            }).fail(function(XMLHttpRequest, textStatus, errorThrown){
+                alert(errorThrown);
+                timer = null;
+            });
+        }, 1000)
+    }
+}
+</script>
+</body>
+</html>

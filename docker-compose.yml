@@ -22,6 +22,21 @@ services:
       MARIADB_PASSWORD: "viblioteca"
       MYSQL_ROOT_PASSWORD: "sekret"
 
+  app:
+    build: ./build/app
+    ports:
+      - '8088:5000'
+    depends_on:
+      - db
+    working_dir: "/code"
+    volumes:
+      - "./volumes/app:/code"
+    environment:
+      MYSQL_HOST: "db"
+      MYSQL_DATABASE: "viblioteca"
+      MYSQL_USER: "viblioteca"
+      MYSQL_PASSWORD: "viblioteca"
+
   pma:
     image: phpmyadmin
     ports:
