@@ -1,3 +1,4 @@
 work/www.ieice.org
 work/webinar.ieice.org
 work/*.log
+.DS_Store
