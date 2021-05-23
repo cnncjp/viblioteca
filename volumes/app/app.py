@@ -15,13 +15,16 @@ def search():
     try:
         cur = con.cursor()
         try:
-            cur.execute("select id, org, title, url, description, filename, tag, width, height, thumbUrl from contents"
-                " where description like %s", ("%" + query + "%",))
+            cur.execute("select id, org, title, description, width, height, "
+                "type, url, thumbUrl, indexText from contents"
+                " where LOWER(indexText) like %s"
+                " order by id", ("%" + query.lower() + "%",))
             result = list()
             for r in cur:
                 result.append({"id": r[0], "org": r[1], "title": r[2],
-                    "url": r[3], "description": r[4], "filename": r[5],
-                    "tag": r[6], "width": r[7], "height": r[8]})
+                    "description": r[3], "width": r[4], "height": r[5],
+                    "type": r[6], "url": r[7], "thumbUrl": r[8],
+                    "indexText": r[9]})
             return jsonify(result)
         finally:
             cur.close()

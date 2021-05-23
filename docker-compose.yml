@@ -16,6 +16,9 @@ services:
     image: mariadb:10.5
     ports:
       - '3306:3306'
+    volumes:
+      - ./build/db:/docker-entrypoint-initdb.d
+      - db-data:/var/lib/mysql
     environment:
       MARIADB_DATABASE: "viblioteca"
       MARIADB_USER: "viblioteca"
@@ -25,7 +28,7 @@ services:
   app:
     build: ./build/app
     ports:
-      - '8088:5000'
+      - '8089:5000'
     depends_on:
       - db
     working_dir: "/code"
@@ -47,3 +50,6 @@ services:
       PMA_HOST: db
       PMA_USER: viblioteca
       PMA_PASSWORD: viblioteca
+
+volumes:
+  db-data:

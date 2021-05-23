@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="container">
-    <div class="row">Webinar検索</div>
+    <div class="row">Viblioteca - 学会ウェビナー検索</div>
     <div class="row">
         <input id="searchInput" class="form-control" placeholder="検索キーワードを入力してください(例: 人工知能)" onkeydown="keyDown(this);">
     </div>
@@ -17,7 +17,7 @@
     <div id="result" class="row" style="overflow: auto; min-height: 200px; max-height: 370px; display: flex; border: 1px solid silver; border-radius: 4px;">
         <br/>
         <font color="gray">検索結果がここに表示されます。</font>
-<!--        
+<!--
         <div class="btn btn-light" data-bs-toggle="button" aria-pressed="false" style="width:180px; height:180px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
             <b><small>[<span>CNNC</span>]</small></b><br/>
             <span>サンプル</span>
@@ -36,11 +36,11 @@
 -->
     </div>
     <template id="sr">
-        <div class="btn btn-light" data-toggle="button" style="overflow: hidden; width:180px; height:180px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
+        <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:240px; height:240px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
             <small>[<span></span>]</small><br/>
-            <big><span></span></big><br/>
-            <font color="gray"><span></span></font>
-            <!-- img src="" width="180px" height="180px" -->
+            <small><span></span></small>
+            <img src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;">
+            <font color="dimgray"><span></span></font>
         </div>
     </template>
     <template id="resultPage">
@@ -51,7 +51,7 @@
 </div>
 <script>
 let timer = null;
-const urls = new Map();
+const videos = new Map();
 let lastKeyDownMillis = new Date().getTime();
 function keyDown(self){
     lastKeyDownMillis = new Date().getTime();
@@ -69,46 +69,55 @@ function doSearch(){
             const resDiv = $("#result");
             resDiv.empty();
             $("#page").empty();
-            urls.clear();
-            $("#resultTitle").empty().append($("<span>").text(`検索結果: ${result.length}件(キーワード: ${query})`));
+            videos.clear();
+            const resultTitle = (query != "") ?
+                `検索結果: ${result.length}件(キーワード: ${query})` :
+                `全ての動画: ${result.length}件`;
+            $("#resultTitle").empty().append($("<span>").text(resultTitle));
+            $("#pageTitle").empty().append($("<span>").text("クリックしたページがここに表示されます。"));
             for(const r of result){
                 const div = $(template.content.cloneNode(true));
                 const org = r["org"];
                 const title = r["title"];
+                const description = r["description"];
                 let shortTitle = title;
                 if(shortTitle.length > 26){
                     shortTitle = shortTitle.substring(0, 25) + "…";
                 }
-                const description = r["description"];
-                const idx = description.indexOf(query);
+                const indexText = r["indexText"];
+                const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
                 let kwic = $("<span>");
+                const total = 25;
                 if(query.length > 0 && idx != -1){
-                    const psc = 10;
-                    kwic.append("…" + description.substring(idx - psc, idx).trim())
-                        .append($("<b>").append($("<font>").attr("color", "#556666").text(query)))
-                        .append(description.substring(idx + query.length, idx + query.length + psc).trim() + "…");
+                    const rest = total - query.length;
+                    const prefixBegin = idx - (rest / 2);
+                    const prefix = indexText.substring(prefixBegin, idx).trim();
+                    kwic.append((prefixBegin == 0 ? "": "…") + prefix)
+                        .append($("<b>").append($("<font>").attr("color", "#556666").text(indexText.substring(idx, idx + query.length))))
+                        .append(indexText.substring(idx + query.length, idx + query.length + (rest - prefix.length)).trim() + "…");
                 } else{
-                    kwic = description.substring(0, 24) + "…";
+                    kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
                 }
                 div.find("span:eq(0)").text(r["org"]);
-                div.find("span:eq(1)").text(shortTitle);
+                div.find("span:eq(1)").text(`${r["id"]}. ${shortTitle}`);
                 div.find("span:eq(2)").append(kwic);
-//                    div.find("img").attr("src", r[8]);
+                const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"]
+                div.find("img").attr("src", thumb);
                 resDiv.append(div);
                 const id = r["id"];
-                urls.set(id, r["url"]);
+                videos.set(id, {
+                    "type": r["type"],
+                    "url": r["url"],
+                    "thumbUrl": r["thumbUrl"]});
                 resDiv.find("div:last").on("click", ()=>{
-                    const url = urls.get(id);
-                    console.log(`${id}: ${url}`);
+                    const v = videos.get(id);
                     const pageContainer = $("#page");
                     const pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
-//                    pageContainer.empty();
-                    pageNode.find("iframe").attr("src", url);
+                    pageNode.find("iframe").attr("src", v["url"]);
                     pageContainer.empty().append(pageNode);
                     $("#pageTitle").empty().append($("<span>").text(`表示中のページ: [${org}] ${title}`));
                 });
             }
-            console.log(result);
         }).fail(function(XMLHttpRequest, textStatus, errorThrown){
             alert(errorThrown);
         });
@@ -118,6 +127,7 @@ function doSearch(){
         timer = setTimeout(doSearch, 1000 - d);
     }
 }
+$(doSearch);
 </script>
 </body>
 </html>
