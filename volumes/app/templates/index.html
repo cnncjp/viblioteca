@@ -46,6 +46,12 @@
     <template id="resultPage">
         <iframe width="640" height="720" src=""></iframe>
     </template>
+    <template id="resultPageNotEmbeddable">
+        <div>
+            <h4>コンテンツのポリシーにより表示できません。<br/>下記のリンクをクリックすると，別ウィンドウでウェビナーページが表示されます。</h4>
+            <big><a href="https://webinar.ieice.org/summary.php?id=177&expandable=1&code=PRS&sel=&year=2020" target="_blank">動画ページを開く</a></big>
+        </div>
+    </template>
     <hr>
     Copyright <a href="https://cnnc.jp/">Connections Co., Ltd.</a>
 </div>
@@ -101,19 +107,27 @@ function doSearch(){
                 div.find("span:eq(0)").text(r["org"]);
                 div.find("span:eq(1)").text(`${r["id"]}. ${shortTitle}`);
                 div.find("span:eq(2)").append(kwic);
-                const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"]
+                const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
                 div.find("img").attr("src", thumb);
                 resDiv.append(div);
                 const id = r["id"];
+                const embeddable = r["embeddable"];
                 videos.set(id, {
                     "type": r["type"],
                     "url": r["url"],
+                    "embeddable": r["embeddable"],
                     "thumbUrl": r["thumbUrl"]});
                 resDiv.find("div:last").on("click", ()=>{
+                    let pageNode = null;
                     const v = videos.get(id);
+                    if(v["embeddable"]){
+                        pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
+                        pageNode.find("iframe").attr("src", v["url"]);
+                    } else{
+                        pageNode = $(document.querySelector("#resultPageNotEmbeddable").content.cloneNode(true));
+                        pageNode.find("a").attr("href", v["url"]);
+                    }
                     const pageContainer = $("#page");
-                    const pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
-                    pageNode.find("iframe").attr("src", v["url"]);
                     pageContainer.empty().append(pageNode);
                     $("#pageTitle").empty().append($("<span>").text(`表示中のページ: [${org}] ${title}`));
                 });
