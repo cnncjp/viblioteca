@@ -17,7 +17,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - ./build/db:/docker-entrypoint-initdb.d
+      - ./build/db/dump.sql.gz:/docker-entrypoint-initdb.d/dump.sql.gz
       - db-data:/var/lib/mysql
     environment:
       MARIADB_DATABASE: "viblioteca"
