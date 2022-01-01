@@ -17,14 +17,15 @@ def search():
         cur = con.cursor()
         try:
             q = "select id, org, title, description, width, height, " \
-                "type, url, embeddable, thumbUrl, indexText, viewCount, likeCount from contents" \
+                "type, url, embeddable, thumbUrl, indexText, viewCount, likeCount, "\
+                "publishedAt from contents" \
                 " where LOWER(indexText) like %s"
             if sort == "viewCount":
                 q += " order by viewCount desc"
             elif sort == "likeCount":
                 q += " order by likeCount desc"
             else:
-                q += " order by id"
+                q += " order by publishedAt desc"
             cur.execute(q, ("%" + query.lower() + "%",))
             result = list()
             for r in cur:
@@ -32,7 +33,8 @@ def search():
                     "description": r[3], "width": r[4], "height": r[5],
                     "type": r[6], "url": r[7], "embeddable": r[8] != 0,
                     "thumbUrl": r[9], "indexText": r[10],
-                    "viewCount": r[11], "likeCount": r[12]})
+                    "viewCount": r[11], "likeCount": r[12],
+                    "publishedAt": r[13].strftime("%Y-%m-%d")})
             return jsonify(result)
         finally:
             cur.close()
