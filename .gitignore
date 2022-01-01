@@ -1,5 +1,6 @@
 work/www.ieice.org
 work/webinar.ieice.org
 work/*.log
+work/config.yaml
 .DS_Store
 .ipynb_checkpoints

@@ -1,0 +1,20 @@
+
+db:
+    host: dbhost
+    name: dbname
+    user: dbuser
+    pass: dbpass
+
+google:
+    apiKey: YOUR_API_KEY
+
+youtube:
+    channels:
+        UCDMkjDeK_8WafkMvIfbtTKQ: "電子情報通信学会"
+        UC8uVGnC5MTi4KnbJGNFUXog: "情報処理学会"
+        UCVzAsIAtO8aVCV43QNF48XA: "情報処理学会インタラクションシンポジウム"
+        UCg6i7YNuslvlN0_RlZQ-ggQ: "sigec"
+        UCtqftmHFhN6DsHGjfVqneAA: "Dr. AyumiとDr. MoeのUBIチャンネル"
+        UCaOkRhbjsqviiDQdKn-p0HA: "DBSJ最強データベース講義"
+        UClzd97uGh4I_nwRM4hbgZqw: "signl ipsj"
+        UCXWW29NBsGlvgsj9bNo_CoA: "AAC IPSJ"
