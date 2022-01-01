@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col">並び替え:
             <input id="noOrder" type="radio" name="sort" class="form-check-input" style="display: inline-block;" value="none" checked>
-            <label for="noOrder" class="form-check-label">なし</label>
+            <label for="noOrder" class="form-check-label">新着順</label>
             &nbsp;
             <input id="orderByViewCount" type="radio" name="sort" class="form-check-input" style="display: inline-block;" value="viewCount">
             <label for="orderByViewCount" class="form-check-label">再生回数</label>
@@ -48,16 +48,17 @@
 -->
     </div>
     <template id="sr">
-        <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:256px; height:260px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
+        <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:312px; height:312px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
             <small>[<span title="組織名"></span>]</small>
             <span class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="再生回数">preview</span>
             <span style="font-size: 1rem" title="再生回数"></span>
             <span class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="いいね回数">thumb_up</span>
             <span style="font-size: 1rem" title="いいね回数"></span>
             <br/>
-            <small><span title="タイトル"></span></small>
-            <img title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;">
-            <font color="dimgray"><span title="説明"></span></font>
+            <small><span title="タイトル"></span></small><br/>
+            <img title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;"><br/>
+            <font color="dimgray"><span title="説明"></span></font><br/>
+            <small><span title="日付"></span></small>
         </div>
     </template>
     <template id="resultPage">
@@ -95,7 +96,7 @@ function doSearch(){
             $("#page").empty();
             videos.clear();
             const resultTitle = (query != "") ?
-                `検索結果: ${result.length}件(キーワード: ${query})` :
+                `検索結果: ${result.length}件(検索ワード: ${query})` :
                 `全ての動画: ${result.length}件`;
             $("#resultTitle").empty().append($("<span>").text(resultTitle));
             $("#pageTitle").empty().append($("<span>").text("クリックしたページがここに表示されます。"));
@@ -104,14 +105,21 @@ function doSearch(){
                 const org = r["org"];
                 const title = r["title"];
                 const description = r["description"];
+                const publishedAt = r["publishedAt"];
+                const orgLength = 12;
+                let shortOrg = org;
+                if(shortOrg.length > orgLength){
+                    shortOrg = shortOrg.substring(0, orgLength - 1) + "…";
+                }
+                const titleLength = 40;
                 let shortTitle = title;
-                if(shortTitle.length > 26){
-                    shortTitle = shortTitle.substring(0, 25) + "…";
+                if(shortTitle.length > titleLength){
+                    shortTitle = shortTitle.substring(0, titleLength - 1) + "…";
                 }
                 const indexText = r["indexText"];
                 const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
                 let kwic = $("<span>");
-                const total = 25;
+                const total = 68;
                 if(query.length > 0 && idx != -1){
                     const rest = total - query.length;
                     const prefixBegin = idx - (rest / 2);
@@ -122,8 +130,8 @@ function doSearch(){
                 } else{
                     kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
                 }
-                div.find("span:eq(0)").text(r["org"]);
-                if(r["type"] == "custom"){
+                div.find("span:eq(0)").attr("title", org).text(shortOrg);
+                if(r["type"] != "youtube"){
                     div.find("span:eq(1)").css("display", "none");
                     div.find("span:eq(2)").css("display", "none");
                     div.find("span:eq(3)").css("display", "none");
@@ -132,8 +140,9 @@ function doSearch(){
                     div.find("span:eq(2)").text(r["viewCount"]);
                     div.find("span:eq(4)").text(r["likeCount"]);
                 }
-                div.find("span:eq(5)").text(`${r["id"]}. ${shortTitle}`);
-                div.find("span:eq(6)").append(kwic);
+                div.find("span:eq(5)").attr("title", title).text(`${shortTitle}`);
+                div.find("span:eq(7)").append(publishedAt + "公開"); // kwicでspanが追加されるので，それより前に日付を追加する
+                div.find("span:eq(6)").attr("title", description).append(kwic);
                 const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
                 div.find("img").attr("src", thumb);
                 resDiv.append(div);
