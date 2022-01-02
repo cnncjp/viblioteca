@@ -6,27 +6,85 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    </head>
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+<style>
+.inline-radio {
+  display: flex;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #b6b6b6;
+  margin-bottom: 2px;
+}
+
+.inline-radio div {
+  position: relative;
+  flex: 1;
+}
+
+.inline-radio input {
+  width: 100%;
+  height: 1rem;
+  opacity: 0;
+}
+
+.inline-radio label {
+    position: absolute;
+    top: 0; left: 0;
+    color: #b6b6b6;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-right: 1px solid #b6b6b6;
+}
+
+.inline-radio div:last-child label {
+  border-right: 0;
+}
+
+.inline-radio input:checked + label {
+  background: #1572fc;
+  font-weight: 500;
+  color: rgb(253, 252, 252);
+}
+</style>
+</head>
 <body>
 <div class="container">
     <div class="row">Viblioteca - 学会ウェビナー検索</div>
     <div class="row">
-        <input id="searchInput" class="form-control" placeholder="検索キーワードを入力してください(例: 人工知能)" onkeydown="keyDown(this);">
+        <input id="searchInput" class="form-control" placeholder="検索キーワードを入力してください(例: 人工知能)">
     </div>
     <div class="row">
-        <div class="col">並び替え:
-            <input id="noOrder" type="radio" name="sort" class="form-check-input" style="display: inline-block;" value="none" checked>
-            <label for="noOrder" class="form-check-label">新着順</label>
+        <div id="orderOptions" class="col">並び替え:
+            <input id="orderByPublishedAt" type="radio" name="order" class="form-check-input" style="display: inline-block;" value="publishedAt" checked>
+            <label for="orderByPublishedAt" class="form-check-label">新着順</label>
             &nbsp;
-            <input id="orderByViewCount" type="radio" name="sort" class="form-check-input" style="display: inline-block;" value="viewCount">
+            <input id="orderByViewCount" type="radio" name="order" class="form-check-input" style="display: inline-block;" value="viewCount">
             <label for="orderByViewCount" class="form-check-label">再生回数</label>
             &nbsp;
-            <input id="orderByLikeCount" type="radio" name="sort" class="form-check-input" style="display: inline-block;" value="likeCount">
+            <input id="orderByLikeCount" type="radio" name="order" class="form-check-input" style="display: inline-block;" value="likeCount">
             <label for="orderByLikeCount" class="form-check-label">いいね回数</label>
         </div>
     </div>
     <br/>
-    <div id="resultTitle" class="row"></div>
+    <div id="resultTitle" class="row">
+        <div class="col-11"><span data-summary></span></div>
+        <div class="col-1"><span style="text-align: right;">
+            <div class="inline-radio">
+                <div><input type="radio" name="viewMode" value="grid" checked>
+                    <label class="material-icons-outlined">grid_view</label>
+                </div>
+                <div><input type="radio" name="viewMode" value="list">
+                    <label class="material-icons-outlined">list</label>
+                </div>
+            </div>
+        </span></div>
+    </div>
     <div id="result" class="row" style="overflow: auto; min-height: 200px; max-height: 370px; display: flex; border: 1px solid silver; border-radius: 4px;">
         <br/>
         <font color="gray">検索結果がここに表示されます。</font>
@@ -74,117 +132,156 @@
     Copyright <a href="https://cnnc.jp/">Connections Co., Ltd.</a>
 </div>
 <script>
-let timer = null;
 const videos = new Map();
-let lastKeyDownMillis = new Date().getTime();
-function keyDown(self){
-    lastKeyDownMillis = new Date().getTime();
-    if(timer != null) return;
-    timer = setTimeout(doSearch, 1000);
-    console.log("timer start");
-}
-function doSearch(){
-    const d = new Date().getTime() - lastKeyDownMillis;
-    if(d >= 1000){
-        const query = $("#searchInput").val().trim();
-        const sort = document.querySelector("input[type='radio'][name='sort']:checked").getAttribute("value");
-        console.log(`do search('${query}', ${sort})`);
-        $.getJSON('search', {query: query, sort: sort}, result=>{
-            const template = document.querySelector('#searchResultPanel');
-            const resDiv = $("#result");
-            resDiv.empty();
-            $("#page").empty();
-            videos.clear();
-            const resultTitle = (query != "") ?
-                `検索結果: ${result.length}件(検索ワード: ${query})` :
-                `全ての動画: ${result.length}件`;
-            $("#resultTitle").empty().append($("<span>").text(resultTitle));
-            $("#pageTitle").empty().append($("<span>").text("クリックしたページがここに表示されます。"));
-            for(const r of result){
-                const div = $(template.content.cloneNode(true));
-                const org = r["org"];
-                const title = r["title"];
-                const description = r["description"];
-                const publishedAt = r["publishedAt"];
-                const orgLength = 12;
-                let shortOrg = org;
-                if(shortOrg.length > orgLength){
-                    shortOrg = shortOrg.substring(0, orgLength - 1) + "…";
-                }
-                const titleLength = 40;
-                let shortTitle = title;
-                if(shortTitle.length > titleLength){
-                    shortTitle = shortTitle.substring(0, titleLength - 1) + "…";
-                }
-                const indexText = r["indexText"];
-                const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
-                let kwic = $("<span>");
-                const total = 68;
-                if(query.length > 0 && idx != -1){
-                    const rest = total - query.length;
-                    const prefixBegin = idx - (rest / 2);
-                    const prefix = indexText.substring(prefixBegin, idx).trim();
-                    kwic.append((prefixBegin == 0 ? "": "…") + prefix)
-                        .append($("<b>").append($("<font>").attr("color", "#556666").text(indexText.substring(idx, idx + query.length))))
-                        .append(indexText.substring(idx + query.length, idx + query.length + (rest - prefix.length)).trim() + "…");
-                } else{
-                    kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
-                }
-                div.find("span[data-orgName]").attr("title", org).text(shortOrg);
-                if(r["type"] != "youtube"){
-                    div.find("span[data-viewicon]").css("display", "none");
-                    div.find("span[data-viewcount]").css("display", "none");
-                    div.find("span[data-favicon]").css("display", "none");
-                    div.find("span[data-favcount]").css("display", "none");
-                } else{
-                    div.find("span[data-viewcount]").text(r["viewCount"] != -1 ? r["viewCount"] : "-");
-                    div.find("span[data-favcount]").text(r["likeCount"] != -1 ? r["likeCount"] : "-");
-                }
-                div.find("span[data-title]").attr("title", title).text(`${shortTitle}`);
-                div.find("span[data-description]").attr("title", description).append(kwic);
-                div.find("span[data-publishedAt]").append(publishedAt + "公開");
-                const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
-                div.find("img[data-thumbnail]").attr("src", thumb);
-                resDiv.append(div);
-                const id = r["id"];
-                const embeddable = r["embeddable"];
-                videos.set(id, {
-                    "type": r["type"],
-                    "url": r["url"],
-                    "embeddable": r["embeddable"],
-                    "thumbUrl": r["thumbUrl"]});
-                resDiv.find("div:last").on("click", ()=>{
-                    let pageNode = null;
-                    const v = videos.get(id);
-                    if(v["embeddable"]){
-                        pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
-                        pageNode.find("iframe").attr("src", v["url"]);
-                    } else{
-                        pageNode = $(document.querySelector("#resultPageNotEmbeddable").content.cloneNode(true));
-                        pageNode.find("a").attr("href", v["url"]);
-                    }
-                    const pageContainer = $("#page");
-                    pageContainer.empty().append(pageNode);
-                    $("#pageTitle").empty().append($("<span>").text(`表示中のページ: [${org}] ${title}`));
-                });
-            }
-        }).fail(function(XMLHttpRequest, textStatus, errorThrown){
-            alert(errorThrown);
+window.addEventListener("load", ()=>{
+    const params = new URLSearchParams(window.location.search);
+    let query = params.get("q") || "";
+    let order = params.get("o") || "publishedAt";
+    let view = params.get("v") || "grid";
+    doSearch(query, order, view);
+    redoSearch = ()=>{
+        history.replaceState({}, null, `?q=${query}&o=${order}&v=${view}`)
+        doSearch(query, order, view);
+    }
+    new SearchInput("#searchInput", query).onSearch = value=>{
+        query = value;
+        redoSearch();
+    }
+    new RadioButtons("order", order).onChanged = value=>{
+        order = value;
+        redoSearch();
+    };
+    new RadioButtons("viewMode", view).onChanged = value=>{
+        view = value;
+        redoSearch();
+    }
+});
+
+class SearchInput{
+    constructor(selector, initialValue){
+        this.timer = null;
+        this.lastKeyDownMillis = Date.now();
+        this.input = document.querySelector("#searchInput");
+        this.input.value = initialValue;
+        this.input.addEventListener("keydown", ()=>{
+            this.keydown();
         });
-        timer = null;
-    } else{
-        console.log("timer restart " + (1000 - d));
-        timer = setTimeout(doSearch, 1000 - d);
+    }
+
+    keydown(){
+        this.lastKeyDownMillis = Date.now();
+        if(this.timer != null) clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{
+            this.onSearch(this.input.value);
+            clearTimeout(timer);
+            timer = null;
+        }, 1000);
+        console.log("timer start");
+    }
+
+    onSearch(query){
     }
 }
-window.addEventListener("load", ()=>{
-    doSearch();
-    document.querySelectorAll("input[type='radio'][name='sort']").forEach(elm=>{
-        elm.addEventListener("click", e=>{
-            doSearch();
+class RadioButtons{
+    constructor(name, initialValue){
+        document.querySelectorAll(`input[type='radio'][name='${name}']`).forEach(elm=>{
+            elm.addEventListener("click", e=>{
+                this.onChanged(e.target.value);
+            });
         });
+        document.querySelector(`input[type='radio'][name='${name}'][value='${initialValue}'`).checked = true;
+    }
+
+    onChanged(value){
+    }
+}
+
+function doSearch(query, order, view){
+    console.log(`do search('${query}', ${order}, ${view})`);
+    $.getJSON('search', {query: query, sort: order}, result=>{
+        const template = document.querySelector('#searchResultPanel');
+        const resDiv = $("#result");
+        resDiv.empty();
+        $("#page").empty();
+        videos.clear();
+        const resultTitle = (query != "") ?
+            `検索結果: ${result.length}件(検索ワード: ${query})` :
+            `全ての動画: ${result.length}件`;
+        $("#resultTitle").find("span[data-summary]").text(resultTitle);
+        $("#pageTitle").empty().append($("<span>").text("クリックしたページがここに表示されます。"));
+        for(const r of result){
+            const div = $(template.content.cloneNode(true));
+            const org = r["org"];
+            const title = r["title"];
+            const description = r["description"];
+            const publishedAt = r["publishedAt"];
+            const orgLength = 12;
+            let shortOrg = org;
+            if(shortOrg.length > orgLength){
+                shortOrg = shortOrg.substring(0, orgLength - 1) + "…";
+            }
+            const titleLength = 40;
+            let shortTitle = title;
+            if(shortTitle.length > titleLength){
+                shortTitle = shortTitle.substring(0, titleLength - 1) + "…";
+            }
+            const indexText = r["indexText"];
+            const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
+            let kwic = $("<span>");
+            const total = 68;
+            if(query.length > 0 && idx != -1){
+                const rest = total - query.length;
+                const prefixBegin = idx - (rest / 2);
+                const prefix = indexText.substring(prefixBegin, idx).trim();
+                kwic.append((prefixBegin == 0 ? "": "…") + prefix)
+                    .append($("<b>").append($("<font>").attr("color", "#556666").text(indexText.substring(idx, idx + query.length))))
+                    .append(indexText.substring(idx + query.length, idx + query.length + (rest - prefix.length)).trim() + "…");
+            } else{
+                kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
+            }
+            div.find("span[data-orgName]").attr("title", org).text(shortOrg);
+            if(r["type"] != "youtube"){
+                div.find("span[data-viewicon]").css("display", "none");
+                div.find("span[data-viewcount]").css("display", "none");
+                div.find("span[data-favicon]").css("display", "none");
+                div.find("span[data-favcount]").css("display", "none");
+            } else{
+                div.find("span[data-viewcount]").text(r["viewCount"] != -1 ? r["viewCount"] : "-");
+                div.find("span[data-favcount]").text(r["likeCount"] != -1 ? r["likeCount"] : "-");
+            }
+            div.find("span[data-title]").attr("title", title).text(`${shortTitle}`);
+            div.find("span[data-description]").attr("title", description).append(kwic);
+            div.find("span[data-publishedAt]").append(publishedAt + "公開");
+            const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
+            div.find("img[data-thumbnail]").attr("src", thumb);
+            resDiv.append(div);
+            const id = r["id"];
+            const embeddable = r["embeddable"];
+            videos.set(id, {
+                "type": r["type"],
+                "url": r["url"],
+                "embeddable": r["embeddable"],
+                "thumbUrl": r["thumbUrl"]});
+            resDiv.find("div:last").on("click", ()=>{
+                let pageNode = null;
+                const v = videos.get(id);
+                if(v["embeddable"]){
+                    pageNode = $(document.querySelector('#resultPage').content.cloneNode(true));
+                    pageNode.find("iframe").attr("src", v["url"]);
+                } else{
+                    pageNode = $(document.querySelector("#resultPageNotEmbeddable").content.cloneNode(true));
+                    pageNode.find("a").attr("href", v["url"]);
+                }
+                const pageContainer = $("#page");
+                pageContainer.empty().append(pageNode);
+                $("#pageTitle").empty().append($("<span>").text(`表示中のページ: [${org}] ${title}`));
+            });
+        }
+    }).fail(function(XMLHttpRequest, textStatus, errorThrown){
+        alert(errorThrown);
     });
-});
+    timer = null;
+}
 </script>
 </body>
 </html>
