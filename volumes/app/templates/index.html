@@ -23,7 +23,7 @@
 }
 
 .inline-radio input {
-  width: 100%;
+  width: 4rem;
   height: 1rem;
   opacity: 0;
 }
@@ -73,8 +73,8 @@
     </div>
     <br/>
     <div id="resultTitle" class="row">
-        <div class="col-11"><span data-summary></span></div>
-        <div class="col-1"><span style="text-align: right;">
+        <div class="col-10"><span data-summary></span></div>
+        <div class="col-2"><span style="text-align: right;">
             <div class="inline-radio">
                 <div><input type="radio" name="viewMode" value="grid" checked>
                     <label class="material-icons-outlined">grid_view</label>
@@ -107,6 +107,20 @@
     </div>
     <template id="searchResultPanel">
         <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:312px; height:312px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
+            <small>[<span data-orgName title="組織名"></span>]</small>
+            <span data-viewicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="再生回数">preview</span>
+            <span data-viewcount style="font-size: 1rem" title="再生回数"></span>
+            <span data-favicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="いいね回数">thumb_up</span>
+            <span data-favcount style="font-size: 1rem" title="いいね回数" data-favcount></span>
+            <br/>
+            <small><span data-title title="タイトル"></span></small><br/>
+            <img data-thumbnail title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;"><br/>
+            <small><font color="dimgray"><span data-description title="説明"></span></font><br/></small>
+            <small><span data-publishedAt title="公開日"></span></small>
+        </div>
+    </template>
+    <template id="searchResultRow">
+        <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:100%; display: flexbox; border: 1px solid silver; border-radius: 4px;">
             <small>[<span data-orgName title="組織名"></span>]</small>
             <span data-viewicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="再生回数">preview</span>
             <span data-viewcount style="font-size: 1rem" title="再生回数"></span>
@@ -199,11 +213,16 @@ class RadioButtons{
 function doSearch(query, order, view){
     console.log(`do search('${query}', ${order}, ${view})`);
     $.getJSON('search', {query: query, sort: order}, result=>{
-        const template = document.querySelector('#searchResultPanel');
+        const template = document.querySelector(view == "grid" ? '#searchResultPanel' : '#searchResultRow');
         const resDiv = $("#result");
         resDiv.empty();
         $("#page").empty();
         videos.clear();
+
+        const orgLength = view == "grid" ? 12 : 1000;
+        const titleLength = view == "grid" ? 40 : 1000;
+        const total = view == "grid" ? 68 : 1000;
+
         const resultTitle = (query != "") ?
             `検索結果: ${result.length}件(検索ワード: ${query})` :
             `全ての動画: ${result.length}件`;
@@ -215,12 +234,10 @@ function doSearch(query, order, view){
             const title = r["title"];
             const description = r["description"];
             const publishedAt = r["publishedAt"];
-            const orgLength = 12;
             let shortOrg = org;
             if(shortOrg.length > orgLength){
                 shortOrg = shortOrg.substring(0, orgLength - 1) + "…";
             }
-            const titleLength = 40;
             let shortTitle = title;
             if(shortTitle.length > titleLength){
                 shortTitle = shortTitle.substring(0, titleLength - 1) + "…";
@@ -228,7 +245,6 @@ function doSearch(query, order, view){
             const indexText = r["indexText"];
             const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
             let kwic = $("<span>");
-            const total = 68;
             if(query.length > 0 && idx != -1){
                 const rest = total - query.length;
                 const prefixBegin = idx - (rest / 2);
