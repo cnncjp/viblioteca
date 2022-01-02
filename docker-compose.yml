@@ -1,30 +1,5 @@
 version: '3'
 services:
-  notebook:
-    build: ./build/jupyter
-    ports:
-      - '8888:8888'
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
-    volumes:
-      - ./work:/home/jovyan/work
-    depends_on:
-      - db
-    command: start-notebook.sh --NotebookApp.token=''
-
-  db:
-    image: mariadb:10.5
-    ports:
-      - '3306:3306'
-    volumes:
-      - ./build/db/dump.sql.gz:/docker-entrypoint-initdb.d/dump.sql.gz
-      - db-data:/var/lib/mysql
-    environment:
-      MARIADB_DATABASE: "viblioteca"
-      MARIADB_USER: "viblioteca"
-      MARIADB_PASSWORD: "viblioteca"
-      MYSQL_ROOT_PASSWORD: "sekret"
-
   app:
     build: ./build/app
     ports:
@@ -40,16 +15,18 @@ services:
       MYSQL_USER: "viblioteca"
       MYSQL_PASSWORD: "viblioteca"
 
-  pma:
-    image: phpmyadmin
+  db:
+    image: mariadb:10.5
     ports:
-      - '8080:80'
-    depends_on:
-      - db
+      - '3306:3306'
+    volumes:
+      - ./build/db/dump.sql.gz:/docker-entrypoint-initdb.d/dump.sql.gz
+      - db-data:/var/lib/mysql
     environment:
-      PMA_HOST: db
-      PMA_USER: viblioteca
-      PMA_PASSWORD: viblioteca
+      MARIADB_DATABASE: "viblioteca"
+      MARIADB_USER: "viblioteca"
+      MARIADB_PASSWORD: "viblioteca"
+      MYSQL_ROOT_PASSWORD: "sekret"
 
 volumes:
   db-data:
