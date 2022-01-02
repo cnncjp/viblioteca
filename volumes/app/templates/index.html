@@ -116,7 +116,7 @@
             <small><span data-title title="タイトル"></span></small><br/>
             <img data-thumbnail title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;"><br/>
             <small><font color="dimgray"><span data-description title="説明"></span></font><br/></small>
-            <small><span data-publishedAt title="公開日"></span></small>
+            <small>(<span data-publishedAt title="公開日"></span>)</small>
         </div>
     </template>
     <template id="searchResultRow">
@@ -126,7 +126,7 @@
             <span data-viewcount style="font-size: 1rem" title="再生回数"></span>
             <span data-favicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="いいね回数">thumb_up</span>
             <span data-favcount style="font-size: 1rem" title="いいね回数" data-favcount></span>
-            &nbsp;&nbsp;<small><span data-publishedAt title="公開日"></span></small>
+            &nbsp;&nbsp;<small>(<span data-publishedAt title="公開日"></span>)</small>
             <br/>
             <small><span data-title title="タイトル"></span></small>
             <div style="text-align: left;">
@@ -153,7 +153,7 @@ window.addEventListener("load", ()=>{
     const params = new URLSearchParams(window.location.search);
     let query = params.get("q") || "";
     let order = params.get("o") || "publishedAt";
-    let view = params.get("v") || "grid";
+    let view = params.get("v") || "list";
     doSearch(query, order, view);
     redoSearch = ()=>{
         history.replaceState({}, null, `?q=${query}&o=${order}&v=${view}`)
