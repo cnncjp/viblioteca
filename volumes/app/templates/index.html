@@ -47,18 +47,18 @@
         <iframe allow="autoplay; fullscreen" allowfullscreen="" frameborder="0" height="360" src="https://player.vimeo.com/video/487952537" width="640"></iframe>
 -->
     </div>
-    <template id="sr">
+    <template id="searchResultPanel">
         <div class="btn btn-light" data-toggle="button" style="position: relative; overflow: hidden; width:312px; height:312px; display: flexbox; border: 1px solid silver; border-radius: 4px;">
-            <small>[<span title="組織名"></span>]</small>
-            <span class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="再生回数">preview</span>
-            <span style="font-size: 1rem" title="再生回数"></span>
-            <span class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="いいね回数">thumb_up</span>
-            <span style="font-size: 1rem" title="いいね回数"></span>
+            <small>[<span data-orgName title="組織名"></span>]</small>
+            <span data-viewicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="再生回数">preview</span>
+            <span data-viewcount style="font-size: 1rem" title="再生回数"></span>
+            <span data-favicon class="material-icons-outlined" style="font-size: 1rem; vertical-align: text-bottom;" title="いいね回数">thumb_up</span>
+            <span data-favcount style="font-size: 1rem" title="いいね回数" data-favcount></span>
             <br/>
-            <small><span title="タイトル"></span></small><br/>
-            <img title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;"><br/>
-            <small><font color="dimgray"><span title="説明"></span></font><br/></small>
-            <small><span title="公開日"></span></small>
+            <small><span data-title title="タイトル"></span></small><br/>
+            <img data-thumbnail title="サムネイル" src="" width="220px" height="100px" style="padding: 2px; margin: 0px; object-fit: contain; left: -8px;"><br/>
+            <small><font color="dimgray"><span data-description title="説明"></span></font><br/></small>
+            <small><span data-publishedAt title="公開日"></span></small>
         </div>
     </template>
     <template id="resultPage">
@@ -90,7 +90,7 @@ function doSearch(){
         const sort = document.querySelector("input[type='radio'][name='sort']:checked").getAttribute("value");
         console.log(`do search('${query}', ${sort})`);
         $.getJSON('search', {query: query, sort: sort}, result=>{
-            const template = document.querySelector('#sr');
+            const template = document.querySelector('#searchResultPanel');
             const resDiv = $("#result");
             resDiv.empty();
             $("#page").empty();
@@ -130,21 +130,21 @@ function doSearch(){
                 } else{
                     kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
                 }
-                div.find("span:eq(0)").attr("title", org).text(shortOrg);
+                div.find("span[data-orgName]").attr("title", org).text(shortOrg);
                 if(r["type"] != "youtube"){
-                    div.find("span:eq(1)").css("display", "none");
-                    div.find("span:eq(2)").css("display", "none");
-                    div.find("span:eq(3)").css("display", "none");
-                    div.find("span:eq(4)").css("display", "none");
+                    div.find("span[data-viewicon]").css("display", "none");
+                    div.find("span[data-viewcount]").css("display", "none");
+                    div.find("span[data-favicon]").css("display", "none");
+                    div.find("span[data-favcount]").css("display", "none");
                 } else{
-                    div.find("span:eq(2)").text(r["viewCount"]);
-                    div.find("span:eq(4)").text(r["likeCount"]);
+                    div.find("span[data-viewcount]").text(r["viewCount"] != -1 ? r["viewCount"] : "-");
+                    div.find("span[data-favcount]").text(r["likeCount"] != -1 ? r["likeCount"] : "-");
                 }
-                div.find("span:eq(5)").attr("title", title).text(`${shortTitle}`);
-                div.find("span:eq(7)").append(publishedAt + "公開"); // kwicでspanが追加されるので，それより前に日付を追加する
-                div.find("span:eq(6)").attr("title", description).append(kwic);
+                div.find("span[data-title]").attr("title", title).text(`${shortTitle}`);
+                div.find("span[data-description]").attr("title", description).append(kwic);
+                div.find("span[data-publishedAt]").append(publishedAt + "公開");
                 const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
-                div.find("img").attr("src", thumb);
+                div.find("img[data-thumbnail]").attr("src", thumb);
                 resDiv.append(div);
                 const id = r["id"];
                 const embeddable = r["embeddable"];
