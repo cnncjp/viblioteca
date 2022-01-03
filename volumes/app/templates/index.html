@@ -180,8 +180,8 @@ class SearchInput{
         if(this.timer != null) clearTimeout(this.timer);
         this.timer = setTimeout(()=>{
             this.onSearch(this.input.value);
-            clearTimeout(timer);
-            timer = null;
+            clearTimeout(this.timer);
+            this.timer = null;
         }, 1000);
         console.log("timer start");
     }
@@ -201,6 +201,26 @@ class RadioButtons{
 
     onChanged(value){
     }
+}
+
+function highlightKeyword(text, keyword, totalLength){
+    const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
+    let kwic = $("<span>");
+    if(keyword.length > 0 && idx != -1){
+        const rest = totalLength - keyword.length;
+        const prefixBegin = idx - (rest / 2);
+        const prefix = text.substring(prefixBegin, idx).trim();
+        const suffixEnd = idx + keyword.length + (rest - prefix.length);
+        const suffix = text.substring(idx + keyword.length, suffixEnd).trim();
+        kwic.append((prefixBegin <= 0 ? "": "…") + prefix)
+            .append($("<b>")
+                .text(text.substring(idx, idx + keyword.length))
+            )
+            .append(suffix + ((text.length <= suffixEnd) ? "" : "…"));
+    } else{
+        kwic = (text.length <= totalLength) ? text : text.substring(0, totalLength) + "…";
+    }
+    return kwic;
 }
 
 function doSearch(query, order, view){
@@ -235,19 +255,6 @@ function doSearch(query, order, view){
             if(shortTitle.length > titleLength){
                 shortTitle = shortTitle.substring(0, titleLength - 1) + "…";
             }
-            const indexText = r["indexText"];
-            const idx = indexText.toLowerCase().indexOf(query.toLowerCase());
-            let kwic = $("<span>");
-            if(query.length > 0 && idx != -1){
-                const rest = total - query.length;
-                const prefixBegin = idx - (rest / 2);
-                const prefix = indexText.substring(prefixBegin, idx).trim();
-                kwic.append((prefixBegin == 0 ? "": "…") + prefix)
-                    .append($("<b>").append($("<font>").attr("color", "#556666").text(indexText.substring(idx, idx + query.length))))
-                    .append(indexText.substring(idx + query.length, idx + query.length + (rest - prefix.length)).trim() + "…");
-            } else{
-                kwic = (description.length <= total) ? description : description.substring(0, total) + "…";
-            }
             div.find("span[data-orgName]").attr("title", org).text(shortOrg);
             if(r["type"] != "youtube"){
                 div.find("span[data-viewicon]").css("display", "none");
@@ -258,8 +265,10 @@ function doSearch(query, order, view){
                 div.find("span[data-viewcount]").text(r["viewCount"] != -1 ? r["viewCount"] : "-");
                 div.find("span[data-favcount]").text(r["likeCount"] != -1 ? r["likeCount"] : "-");
             }
-            div.find("span[data-title]").attr("title", title).text(`${shortTitle}`);
-            div.find("span[data-description]").attr("title", description).append(kwic);
+            div.find("span[data-title]").attr("title", title).append(
+                highlightKeyword(title, query, titleLength));
+            div.find("span[data-description]").attr("title", description).append(
+                highlightKeyword(description, query, total));
             div.find("span[data-publishedAt]").append(publishedAt + "公開");
             const thumb = r["thumbUrl"] == "nothumb.png" ? "/static/img/nothumb.png" : r["thumbUrl"].replace("http:", "https:");
             div.find("img[data-thumbnail]").attr("src", thumb);
